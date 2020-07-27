@@ -33,3 +33,13 @@ class MessageService:
     @rpc
     def get_message(self, message_id):
         return self.message_store.get_message(message_id)
+
+    @rpc
+    def save_message(self, message):
+        message_id = self.message_store.save_message(message)
+        return message_id
+
+    @rpc
+    def get_all_messages(self):
+        messages = self.message_store.get_all_messages()
+        return messages
