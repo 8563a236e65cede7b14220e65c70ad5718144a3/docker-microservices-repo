@@ -4,6 +4,8 @@
 from nameko.rpc import rpc, RpcProxy
 from nameko.web.handlers import http
 from .dependencies.redis import MessageStore
+from .dependencies.jinja2 import Jinja2
+from werkzeug.wrappers import Response
 
 
 class KonnichiwaService:
@@ -18,11 +20,15 @@ class KonnichiwaService:
 class WebServer:
 
     name = "web_server"
-    konnichiwa_service = RpcProxy("konnichiwa_service")
+    message_service = RpcProxy("message_service")
+    templates = Jinja2()
 
     @http("GET", "/")
     def home(self, request):
-        return self.konnichiwa_service.konnichiwa()
+        messages = self.message_service.get_all_messages()
+        rendered_template = self.templates.render_home(messages)
+        html_response = create_html_response(rendered_template)
+        return html_response
 
 
 class MessageService:
@@ -43,3 +49,8 @@ class MessageService:
     def get_all_messages(self):
         messages = self.message_store.get_all_messages()
         return messages
+
+
+def create_html_response(content):
+    headers = {"Content-Type": "text/html"}
+    return Response(content, status=200, headers=headers)
