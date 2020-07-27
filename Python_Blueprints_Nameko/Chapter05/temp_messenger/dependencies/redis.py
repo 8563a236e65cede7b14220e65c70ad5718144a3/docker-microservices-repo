@@ -3,6 +3,7 @@
 """
 from redis import StrictRedis
 from nameko.extensions import DependencyProvider
+from uuid import uuid4
 
 
 class RedisClient:
