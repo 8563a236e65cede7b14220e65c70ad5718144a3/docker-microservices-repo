@@ -50,6 +50,11 @@ class WebServer:
 
         return 204, ""
 
+    @http("GET", "/messages")
+    def get_messages(self, request):
+        messages = self.message_service.get_all_messages()
+        return create_json_response(messages)
+
 
 class MessageService:
 
@@ -83,3 +88,9 @@ def sort_messages_by_expiry(messages, reverse=False):
         key=itemgetter("expires_in"),
         reverse=reverse
     )
+
+
+def create_json_response(content):
+    headers = {"Content-Type": "application/json"}
+    json_data = json.dumps(content)
+    return Response(json_data, status=200, headers=headers)
