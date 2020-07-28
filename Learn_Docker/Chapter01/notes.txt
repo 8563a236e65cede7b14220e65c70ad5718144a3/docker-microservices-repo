@@ -1,0 +1,66 @@
+What are containers?
+    Developers use Docker containers to package their applications,
+    frameworks, and libraries into them, and then they ship those
+    containers to the testers or operations engineers.
+
+    To the testers and operations engineers, a container is just a
+    black box. It is a standardized black box though. All containers
+    can be treated equally.
+
+Why are containers important?
+    Applications running in a container are more secure than their
+    counterparts not running in a container.
+    Containers use Linux security primitives such as Linux kernel
+    namespaces to sandbox different applications running on the
+    same computers and control groups in order to avoid the
+    noisy-neighbour problem, where one bad application is using all
+    the available resources of a server and starving all the other
+    applications
+
+    Due to the fact that container images are immutable, it is easy to
+    have them scanned for common vulnerabilities and exposures.
+
+    Containers make it easy to simulate a productions-like
+    environment, even on a developer's laptop. Since containers are
+    very lean compared to VMs, it is not uncommon to have many
+    containers running at the same time on a developer's laptop
+    without overwhelming the laptop.
+
+    When applications are all containerized, operators can start to
+    standardize their infrastructure. Every server becomes just another
+    Docker host. No special libraries or frameworks need to be installed
+    on those servers, just an OS and a container runtime such as Docker
+
+Container architecture
+    Containers are only possible due to the fact that the Linux OS
+    provides some primitives, such as namespaces, control groups,
+    layer capabilities and more, which are leveraged in a very specific
+    way by the container runtime and the Docker engine.
+
+    Linux kernel namespaces, such as process ID (pid) namespaces or
+    network (net) namespaces allow Docker to encapsulate or sandbox
+    processes that run inside a container.
+
+    Control Groups make sure that containers cannot suffer from the
+    noise-neighbour syndrome, where a single application running in
+    a container can consume most or all of the resources of the whole
+    Docker host. Control Groups allow Docker to limit the resources
+    such as CPU time or the amount of RAM that each container is
+    allocated.
+
+    The container runtime on a Docker host consists of containerd and
+    runc. runc is the low-level functionality of the container runtime,
+    while containerd, which is based on runc, provides higher-level
+    functionality. Both are open source and have been donated by
+    Docker to the CNCF.
+
+    The container runtime is responsible for the whole life cycle of
+    a container. It pulls a container image (which is the template for
+    a container) from a registry if necessary, creates a container
+    from that image, initializes and runs the container, and eventually
+    stops and removes the container from the system when asked.
+
+    The Docker engine provides additional functionality on top of the
+    container runtime, such as network libraries or support for plugins.
+    It also provides a REST interface over which all container operations
+    can be automated. 
