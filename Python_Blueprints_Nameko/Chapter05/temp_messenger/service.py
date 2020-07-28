@@ -6,6 +6,7 @@ from nameko.web.handlers import http
 from .dependencies.redis import MessageStore
 from .dependencies.jinja2 import Jinja2
 from werkzeug.wrappers import Response
+from operator import itemgetter
 import json
 
 
@@ -46,7 +47,7 @@ class WebServer:
             return 400, 'No message given'
 
         self.message_service.save_message(message)
-        
+
         return 204, ""
 
 
@@ -67,9 +68,18 @@ class MessageService:
     @rpc
     def get_all_messages(self):
         messages = self.message_store.get_all_messages()
-        return messages
+        sorted_messages = sort_messages_by_expiry(messages)
+        return sorted_messages
 
 
 def create_html_response(content):
     headers = {"Content-Type": "text/html"}
     return Response(content, status=200, headers=headers)
+
+
+def sort_messages_by_expiry(messages, reverse=False):
+    return sorted(
+        messages,
+        key=itemgetter("expires_in"),
+        reverse=reverse
+    )
