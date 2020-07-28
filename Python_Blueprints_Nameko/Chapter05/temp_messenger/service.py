@@ -6,6 +6,7 @@ from nameko.web.handlers import http
 from .dependencies.redis import MessageStore
 from .dependencies.jinja2 import Jinja2
 from werkzeug.wrappers import Response
+import json
 
 
 class KonnichiwaService:
