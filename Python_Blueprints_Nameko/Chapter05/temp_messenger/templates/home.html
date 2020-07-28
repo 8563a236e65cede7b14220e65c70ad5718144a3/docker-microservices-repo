@@ -12,5 +12,31 @@
     {% else %}
         <p>No messages!</p>
     {% endif %}
+    <form action="messages" id="postMessage">
+        <input type="text" name="message" placeholder="Post message">
+        <input type="submit" value="Post">
+    </form>
+    <script>
+        post_message = document.querySelector("#postMessage");
+        post_message.onsubmit = function(evt){
+            evt.preventDefault();
+            message = this.querySelector("input[name='message']").value;
+            url = this.getAttribute("action");
+
+            var xhttp = new XMLHttpRequest();
+            xhttp.open("POST", url, true);
+            xhttp.responseType = "json";
+            xhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 204) {
+                    window.location.reload();
+                }
+            };
+            xhttp.setRequestHeader("Content-type", "application/json")
+            xhttp.send(JSON.stringify({message: message}));
+        };
+
+
+
+    </script>
 </body>
 </html>
