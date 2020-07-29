@@ -1,0 +1,76 @@
+What are images?
+    An image is basically a big tarball containing a filesystem.
+    More specifically, it contains a layered filesystem
+
+The layered filesystem
+    Container images are templates from which containers are created.
+    These images are not made up of just one monolithic block but are
+    composed of many layers. The first layer in the image is also called
+    the base layer.
+
+    Each individual layer contains files and folders. Each layer only
+    contains the changes to the filesystem with respect to the underlying
+    layers.
+    Docker uses a Union filesystem to create a virtual filesystem out
+    of the set of layers.
+    A storage driver handles the details regarding the way these layers
+    interact with each other. Different storage drivers are available
+    that have advantages and disadvantages in different situations
+
+    The layers of a container image are all immutable. Immutable means that
+    once generated, the layer cannot ever be changed. The only possible
+    operation affecting the layer is its physical deletion. The immutability
+    of layers is import because it opens up a tremendous amount of
+    opportunities.
+
+The writable container layer
+    When the Docker Engine creates a container from such an image, it
+    adds a writable container layer on top of this stack of immutable
+    layers
+
+    The Container Layer is marked as read/write. Another advantage of
+    the immutability of image layers is that they can be shared amount
+    many containers created from this image. All that is needed is a
+    thin, writable container layer for each container.
+
+    This results in a tremendous reduction in the resources that are
+    consumed. This also decreases the loading time of a container since
+    only a thin container layer has to be created once the image layers
+    have been loaded into memory, which only happens for the first
+    container
+
+Copy-on-write
+    Docker uses the copy-on-write technique when dealing with images.
+    Copy-on-write is a strategy for sharing and copying files for
+    maximum efficiency.
+    If a layer uses a file or folder that is available in one of the
+    low-lying layers, then it just uses it.
+    If a layer wants to modify a file from a low-lying layer, then it
+    first copies this file up to the target layer, and then modifies
+    it.
+
+Graph drivers
+    Graph drivers are what enable the Union filesystem. Graph drivers
+    are called storage drivers and are used when dealing with layered
+    container images. A graph driver consolidates multiple image layers
+    into a root filesystem for the mount namespace of the container.
+    The driver controls how images and containers are stored and managed
+    on the Docker host.
+
+Creating images
+    There are three ways to create a new container image
+        Interactively building a container that contains all the
+        additions and changes one desires, and then committing those
+        changes into a new image
+
+        Use a Dockerfile to describe what's in the new image, and then
+        build the image using that Dockerfile as a manifest
+
+        Import it into the system from a tarball
+
+Interactive image creation
+    The first way we can create a custom image is by interactively
+    building a container. We start with a base image and run a
+    container of it interactively.
+
+Using Dockerfiles
