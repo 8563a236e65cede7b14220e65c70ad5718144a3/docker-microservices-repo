@@ -74,4 +74,187 @@ Interactive image creation
     container of it interactively.
 
 Using Dockerfiles
-    A
+    A dockerfile is a text file that is usually literally called
+    Dockerfile. It contains instructions on how to build a custom
+    container image.
+
+    Each line of the Dockerfile results in a layer in the resulting
+    image.
+
+    FROM Keyword
+        Every Dockerfile starts with the FROM keyword. With it, we
+        define which base image we want to start building our custom
+        image from. If we want to build starting with CentOS7 for
+        example, we would have
+            FROM centos:7
+
+        There are curated images for all major Linux distros, as well
+        as for all important development frameworks or languages.
+
+        E.g. if we want to containerize a Python 3.7 application, we
+        may want to select the relevant official python:3.7 image
+            FROM python:3.7
+
+        If we really want to start from scratch, we can also use the
+        following statement
+            FROM scratch
+
+        This is useful in the context of building super-minimal images
+        that only contain a single binary. FROM scratch is a no-op in
+        the Dockerfile, and as such does not generate a layer in the
+        resulting container image
+
+    RUN Keyword
+        The argument for RUN is any valid Linux command
+            RUN yum install -y wget
+            RUN apt update && apt install -y wget
+            RUN mkdir -p /app && cd /app
+            RUN tar -xJC /usr/src/python --strip-components=1 -f python.tar.xz
+            RUN apt update \
+                && apt install -y --no-install-recommends \
+                ca-certificates \
+                libexpat1 \
+                libffi6 \
+                libgdbm3 \
+                libreadline7 \
+                libsqlite3-0 \
+                libssl1.1 \
+                && rm -rf /var/lib/apt/lists/*
+
+    COPY and ADD keywords
+        These two keywords are used to copy files and folders from the
+        host into the image that we're building. The two keywords are
+        very similar, with the exception that the ADD keyword also
+        lets us copy and unpack TAR files, as well as providing a
+        URL as a source for the files and folders to copy
+
+            1) COPY . /app
+            2) COPY ./web /app/web
+            3) COPY sample.txt /data/my-sample.txt
+            4) ADD sample.tar /app/bin
+            5) ADD http://example.com/sample.txt /data/
+
+        1) Copies all files and folders from the current directory
+        recursively to the app folder inside the container image
+        2) Copies everything in the web subfolder to the target
+        folder /app/web
+        3) Copies a single file, sample.txt, into the target folder
+        /data, and at the same time renames it to my-sample.txt
+        4) Unpacks the sample.tar file into the target folder /app/bin
+        5) Copies the remote file sample.txt into the target file
+        /data
+
+        Wildcards are allowed in the source path
+            COPY ./sample* /mydir/
+
+        By default, all files and folders inside the image will have
+        a userID (UID) and a group ID (GID) of 0.
+        With both ADD and COPY, we can change the ownership that the
+        files will have inside the image using the optional --chown flag
+        as follows:
+            ADD --chown=11:22 ./data/web* /app/data/
+        Copies all files starting with name web and puts them into
+        /app/data folder in the image, and at the same time assign user
+        11 and group 22 to these files.
+
+        Instead of numbers, one could also use names for the user and
+        group, but then these entities would have to be already defined
+        in the root filesystem of the image, otherwise the build will
+        fail
+
+    WORKDIR keyword
+        The WORKDIR keyword defines the working directory or context
+        that is used when a container is run from our custom image.
+            WORKDIR /app/bin
+
+        All activity that happens inside the image after the preceding
+        line will use this directory as the working directory
+
+        Note, the following are not the same
+            RUN cd /app/bin
+            RUN touch sample
+                and
+            WORKDIR /app/bin
+            RUN touch sample.txt
+        The former will create the file in the root of the image
+        filesystem while the latter will create the file at the
+        expected location in the /app/bin folder. Only the WORKDIR
+        keyword sets the context across layers of the image. The cd
+        command alone is not persisted across layers
+
+    CMD and ENTRYPOINT keywords
+        ENTRYPOINT is used to define the command of the expression,
+        while CMD is used to define the parameters for the command.
+            FROM alpine:3.10
+            ENTRYPOINT ["ping"]
+            CMD ["-c", "3", "8.8.8.8"]
+        For both ENTRYPOINT and CMD, the values are formatted as a
+        JSON array of strings, where the individual items correspond to
+        the tokens of the expression that are separated by whitespace.
+
+        This is the preferred way of defining CMD and ENTRYPOINT. It
+        is also called the exec form.
+
+        Alternatively, one can use what's called shell form
+            CMD command param1 param2
+
+        We can build an image called pinger from the preceding
+        Dockerfile as follows
+            docker image build -t pinger
+
+        We can run a container from the pinger as follows
+            docker container run --rm -it pinger
+
+        You can modify the expression used to start the container
+            docker container run --rm -it pinger -w 127.0.0.1
+
+        If you want to override what's defined in ENTRYPOINT in the
+        Dockerfile, we need to use the --entrypoint parameter in the
+        docker container run expression
+            docker container run --rm -it --entrypoint /bin/sh pinger
+        If you leave ENTRYPOINT undefined, then it will have the
+        default value of /bin/sh -c and whatever the value of CMD is
+        wil be passed as a string to the shell command
+            /bin/sh -c "wget -O http://www.google.com"
+
+Dockerfile best practices
+    Consider that containers are meant to be ephemeral. By ephemeral
+    we mean that a container can be stopped and destroyed, a new one
+    built and put in place with an absolute minimum of setup and
+    configuration. That means we should try hard to keep the time
+    that is needed to initialize the application running inside
+    the container at a minimum, as well as the time needed to terminate
+    or clean up the application
+
+    Order the individual commands in the Dockerfile so that we leverage
+    caching as much as possible. Building a layer of an image can
+    take a considerable amount of time. While developing out
+    application, we will have to build the container image for our
+    application multiple times. We want to keep the build times
+    at a minimum.
+
+    Keep the number of layers at a minimum
+        Combine multiple individual RUN commands into a single one
+            RUN apt-get update
+            RUN apt-get instal -y ca-certificates
+            RUN rm -rf /var/lib/apt/lists/*
+
+         We can combine these into a single concatenated expression
+         as follows
+         RUN apt-get update \
+            && apt-get install -y ca-certificates \
+            && rm -rf /var/lib/apt/lists/*
+
+    The next three best practices all result in smaller images.
+        Use a .dockerignore file to avoid copying unnecessary files and
+        folders into an image, to keep it as lean as possible.
+
+        Avoid installing unnecessary packages into the filesystem of
+        the image
+
+        Use multi-stage builds
+
+Saving and loading images
+    docker image save -o ./backup/my-alpine.tar my-alpine
+    docker image load -i ./backup/my-alpine.tar
+
