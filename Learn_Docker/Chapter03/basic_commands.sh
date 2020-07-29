@@ -49,3 +49,5 @@ docker container stop trivia
 
 # Get container id
 echo $(docker container ls -a | grep trivia | awk '{print $1}')
+
+# Removing containers
